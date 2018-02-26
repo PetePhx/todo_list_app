@@ -2,6 +2,7 @@ require "sinatra"
 require "sinatra/reloader"
 require "sinatra/content_for"
 require "tilt/erubis"
+require "pry"
 
 configure do
   enable :sessions
@@ -80,5 +81,12 @@ post "/lists/:id" do
     session[:success] = "The list has been updated."
     redirect "/lists/#{@id}"
   end
+end
 
+# Delete a list
+post "/lists/:id/delete" do
+  @id = params[:id].to_i
+  session[:lists].delete_at(@id) # if @session[:lists][@id]
+  session[:success] = "The list has been deleted."
+  redirect "/lists"
 end
