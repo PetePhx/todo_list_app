@@ -2,7 +2,6 @@ require "sinatra"
 require "sinatra/reloader"
 require "sinatra/content_for"
 require "tilt/erubis"
-require "pry"
 
 configure do
   enable :sessions
@@ -34,6 +33,12 @@ def error_for_list_name(name)
     "List name must be between 1 and 100 characters."
   elsif session[:lists].any? { |list| list[:name] == name }
     "List name must be unique."
+  end
+end
+
+def error_for_todo(name)
+  if !(1..100).cover? name.size
+    "Todo name must be between 1 and 100 characters."
   end
 end
 
@@ -89,4 +94,21 @@ post "/lists/:id/delete" do
   session[:lists].delete_at(@id) # if @session[:lists][@id]
   session[:success] = "The list has been deleted."
   redirect "/lists"
+end
+
+# Add a new todo item to a list
+post "/lists/:id/todos" do
+  @id = params[:id].to_i
+  @list = session[:lists][@id]
+  text = params['todo'].strip
+
+  error = error_for_todo(text)
+  if error
+    session[:error] = error
+    erb :list, layout: :layout
+  else
+    @list[:todos] << { name: text, completed: false }
+    session[:success] = "The todo item has been added."
+    redirect "/lists/#{@id}"
+  end
 end
