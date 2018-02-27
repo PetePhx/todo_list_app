@@ -9,7 +9,12 @@
   <ul>
     <% @list[:todos].each_with_index do |todo, idx| %>
       <li>
-        <h3><%= todo[:name] %></h3>
+        <h3><%= todo[:name] %>
+          <form action="/lists/<%= @id %>/todos/<%= idx %>/delete"
+            method="post" class="delete">
+            <button type="submit">Delete</button>
+          </form>
+        </h3>
       </li>
     <% end %>
   </ul>
@@ -19,7 +24,7 @@
   <a href="/lists">All Lists</a>
 <% end %>
 
-<form action="/lists/<%= params[:id] %>/todos" method="post">
+<form action="/lists/<%= @id %>/todos" method="post">
   <dl>
     <dt>
       <label for="todo">Enter a new todo item:</label>
