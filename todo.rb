@@ -119,3 +119,14 @@ post "/lists/:list_id/todos/:todo_id/delete" do |list_id, todo_id|
   session[:success] = "The todo item has been deleted."
   redirect "/lists/#{list_id}"
 end
+
+# Mark an item completed/incomplete
+post "/lists/:list_id/todos/:todo_id" do |list_id, todo_id|
+  @list = session[:lists][list_id.to_i]
+  @list[:todos][todo_id.to_i][:completed] = case params[:completed]
+                                            when "true" then true
+                                            when "false" then false
+                                            end
+  session[:success] = "The todo item has been updated."
+  redirect "/lists/#{list_id}"
+end
