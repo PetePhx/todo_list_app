@@ -24,6 +24,18 @@ helpers do
   def count_todos(list)
     list[:todos].size
   end
+
+  def sort_lists(list_arr, &block)
+    list_arr.each_with_index.sort_by do |list, _|
+      all_todos_done?(list) ? 1 : 0
+    end.each(&block)
+  end
+
+  def sort_todos(list, &block)
+    list[:todos].each_with_index.sort_by do |todo, _|
+      todo[:completed] ? 1 : 0
+    end.each(&block)
+  end
 end
 
 before do

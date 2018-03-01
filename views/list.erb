@@ -12,12 +12,8 @@
   </header>
 
   <ul>
-    <% @list[:todos].each_with_index do |todo, idx| %>
-    <% if todo[:completed] %>
-      <li class="complete">
-    <% else %>
-      <li>
-    <% end %>
+    <% sort_todos(@list) do |todo, idx| %>
+      <li <%= if todo[:completed] then 'class="complete"' end %> >
         <form action="/lists/<%= @id %>/todos/<%= idx %>"
           method="post" class="check">
           <input type="hidden" name="completed"
