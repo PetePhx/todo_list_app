@@ -1,6 +1,6 @@
 <section id="todos">
   <header>
-    <h2>Editing '<%= @list[:name] %>'</h2>
+    <h2>Editing '<%= escape_html @list[:name] %>'</h2>
     <ul>
       <li>
         <form action="/lists/<%= @id %>/delete" method="post">
@@ -18,7 +18,7 @@
     </dt>
     <dd>
       <input name="list_name" placeholder="List Name" type="text"
-      value="<%= params[:list_name] || @list[:name] %>">
+      value="<%= params[:list_name] || escape_html(@list[:name]) %>">
     </dd>
   </dl>
   <fieldset class="actions">

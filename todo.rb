@@ -36,6 +36,10 @@ helpers do
       todo[:completed] ? 1 : 0
     end.each(&block)
   end
+
+  def espace_html(content)
+    Rack::Utils.escape_html(content)
+  end
 end
 
 before do
