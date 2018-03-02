@@ -6,7 +6,9 @@ require "tilt/erubis"
 configure do
   enable :sessions
   set :session_secret, 'secret'
+  set :erb, :escape_html => true
 end
+
 
 helpers do
   def all_todos_done?(list)
@@ -15,6 +17,10 @@ helpers do
 
   def list_class(list)
     "complete" if all_todos_done?(list)
+  end
+
+  def todo_class(todo)
+    "complete" if todo[:completed]
   end
 
   def count_todos_remaining(list)
