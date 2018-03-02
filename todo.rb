@@ -9,7 +9,6 @@ configure do
   set :erb, :escape_html => true
 end
 
-
 helpers do
   def all_todos_done?(list)
     count_todos(list) >= 1 && count_todos_remaining(list).zero?
@@ -46,6 +45,14 @@ helpers do
   def espace_html(content)
     Rack::Utils.escape_html(content)
   end
+end
+
+def load_list(index)
+  list = session[:lists][index] if index && session[:lists][index]
+  return list if list
+
+  session[:error] = "The specified list was not found."
+  redirect("/lists")
 end
 
 before do
@@ -100,14 +107,14 @@ end
 # View a specific list
 get "/lists/:id" do
   @id = params[:id].to_i
-  @list = session[:lists][@id]
+  @list = load_list(@id)
   erb :list, layout: :layout
 end
 
 # Render the edit list form
 get "/lists/:id/edit" do
   @id = params[:id].to_i
-  @list = session[:lists][@id]
+  @list = load_list(@id)
   erb :edit_list, layout: :layout
 end
 
@@ -115,7 +122,7 @@ end
 post "/lists/:id" do
   list_name = params[:list_name].strip
   @id = params[:id].to_i
-  @list = session[:lists][@id]
+  @list = load_list(@id)
 
   error = error_for_list_name(list_name)
   if error
@@ -131,7 +138,7 @@ end
 # Delete a list
 post "/lists/:id/delete" do
   @id = params[:id].to_i
-  session[:lists].delete_at(@id) # if @session[:lists][@id]
+  session[:lists].delete_at(@id)
   session[:success] = "The list has been deleted."
   redirect "/lists"
 end
@@ -139,7 +146,7 @@ end
 # Add a new todo item to a list
 post "/lists/:id/todos" do
   @id = params[:id].to_i
-  @list = session[:lists][@id]
+  @list = load_list(@id)
   text = params['todo'].strip
 
   error = error_for_todo(text)
@@ -155,14 +162,15 @@ end
 
 # Delete a todo from a list
 post "/lists/:list_id/todos/:todo_id/delete" do |list_id, todo_id|
-  session[:lists][list_id.to_i][:todos].delete_at(todo_id.to_i)
+  @list = load_list(list_id.to_i)
+  @list[:todos].delete_at(todo_id.to_i)
   session[:success] = "The todo item has been deleted."
   redirect "/lists/#{list_id}"
 end
 
 # Mark an item completed/incomplete
 post "/lists/:list_id/todos/:todo_id" do |list_id, todo_id|
-  @list = session[:lists][list_id.to_i]
+  @list = load_list(list_id.to_i)
   @list[:todos][todo_id.to_i][:completed] = case params[:completed]
                                             when "true" then true
                                             when "false" then false
@@ -173,8 +181,8 @@ end
 
 # Mark all items as complete
 post "/lists/:list_id/complete_all" do |list_id|
-  @list = session[:lists][list_id.to_i]
-  todos = session[:lists][list_id.to_i][:todos]
+  @list = load_list(list_id.to_i)
+  todos = @list[:todos]
   todos.each { |todo| todo[:completed] = true }
   session[:success] = "All todo items are marked as complete."
   redirect "/lists/#{list_id}"
