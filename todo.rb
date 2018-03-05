@@ -55,6 +55,11 @@ def load_list(index)
   redirect("/lists")
 end
 
+def next_element_id(elements)
+  max = elements.map { |todo| todo[:id] }.max || 0
+  max + 1
+end
+
 before do
   session[:lists] ||= []
 end
@@ -146,7 +151,6 @@ post "/lists/:id/delete" do
     session[:success] = "The list has been deleted."
     redirect "/lists"
   end
-
 end
 
 # Add a new todo item to a list
@@ -160,7 +164,8 @@ post "/lists/:id/todos" do
     session[:error] = error
     erb :list, layout: :layout
   else
-    @list[:todos] << { name: text, completed: false }
+    id = next_element_id(@list[:todos])
+    @list[:todos] << { id: id, name: text, completed: false }
     session[:success] = "The todo item has been added."
     redirect "/lists/#{@id}"
   end
@@ -169,7 +174,7 @@ end
 # Delete a todo from a list
 post "/lists/:list_id/todos/:todo_id/delete" do |list_id, todo_id|
   @list = load_list(list_id.to_i)
-  @list[:todos].delete_at(todo_id.to_i)
+  @list[:todos].delete_if { |todo| todo[:id] == todo_id.to_i }
   if env["HTTP_X_REQUESTED_WITH"] = "XMLHttpRequest"
     status 204 # request successful, no content
   else
@@ -181,10 +186,11 @@ end
 # Mark an item completed/incomplete
 post "/lists/:list_id/todos/:todo_id" do |list_id, todo_id|
   @list = load_list(list_id.to_i)
-  @list[:todos][todo_id.to_i][:completed] = case params[:completed]
-                                            when "true" then true
-                                            when "false" then false
-                                            end
+  @list[:todos].find { |todo| todo[:id] == todo_id.to_i }[:completed] =
+    case params[:completed]
+    when "true" then true
+    when "false" then false
+    end
   session[:success] = "The todo item has been updated."
   redirect "/lists/#{list_id}"
 end
