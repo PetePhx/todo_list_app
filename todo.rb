@@ -15,11 +15,11 @@ helpers do
   end
 
   def list_class(list)
-    "complete" if all_todos_done?(list)
+    all_todos_done?(list) ? "complete" : ""
   end
 
   def todo_class(todo)
-    "complete" if todo[:completed]
+    todo[:completed] ? "complete" : ""
   end
 
   def count_todos_remaining(list)
@@ -139,8 +139,14 @@ end
 post "/lists/:id/delete" do
   @id = params[:id].to_i
   session[:lists].delete_at(@id)
-  session[:success] = "The list has been deleted."
-  redirect "/lists"
+  if env["HTTP_X_REQUESTED_WITH"] = "XMLHttpRequest"
+    # status 204 # request successful, no content
+    "/lists"
+  else
+    session[:success] = "The list has been deleted."
+    redirect "/lists"
+  end
+
 end
 
 # Add a new todo item to a list
@@ -164,8 +170,12 @@ end
 post "/lists/:list_id/todos/:todo_id/delete" do |list_id, todo_id|
   @list = load_list(list_id.to_i)
   @list[:todos].delete_at(todo_id.to_i)
-  session[:success] = "The todo item has been deleted."
-  redirect "/lists/#{list_id}"
+  if env["HTTP_X_REQUESTED_WITH"] = "XMLHttpRequest"
+    status 204 # request successful, no content
+  else
+    session[:success] = "The todo item has been deleted."
+    redirect "/lists/#{list_id}"
+  end
 end
 
 # Mark an item completed/incomplete
