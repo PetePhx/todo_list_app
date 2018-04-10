@@ -11,19 +11,23 @@ class DatabasePersistence
     @db.exec_params(statement, params)
   end
 
-  def find_list(id)
+  def find_list(list_id)
+    todos = find_todos_for_list(list_id)
+
     sql = "SELECT * FROM lists WHERE id = $1;"
-    result = query(sql, id)
+    result = query(sql, list_id)
     tuple = result.first
-    { id: tuple["id"], name: tuple["name"], todos: [] }
+    { id: tuple["id"].to_i, name: tuple["name"], todos: todos }
   end
 
   def all_lists
     sql = "SELECT * FROM lists;"
     result = query(sql)
-
+    todos = find_all_todos
     result.map do |tuple|
-      { id: tuple["id"], name: tuple["name"], todos: [] }
+      { id: tuple["id"].to_i,
+        name: tuple["name"],
+        todos: todos.select { |t| t[:list_id] == tuple["id"].to_i } }
     end
   end
 
@@ -60,4 +64,28 @@ class DatabasePersistence
     # list = find_list(list_id)
     # list[:todos].each { |todo| todo[:completed] = true }
   end
+
+  private
+
+    def find_todos_for_list(list_id)
+      sql_todos = "SELECT * FROM todos WHERE list_id = $1;"
+      result_todos = query(sql_todos, list_id)
+      result_todos.map do |tuple|
+        { id: tuple["id"].to_i,
+          list_id: tuple["list_id"].to_i,
+          name: tuple["name"],
+          completed: tuple["completed"] == "t" }
+      end
+    end
+
+    def find_all_todos
+      sql_todos = "SELECT * FROM todos;"
+      result_todos = query(sql_todos)
+      result_todos.map do |tuple|
+        { id: tuple["id"].to_i,
+          list_id: tuple["list_id"].to_i,
+          name: tuple["name"],
+          completed: tuple["completed"] == "t" }
+      end
+    end
 end
