@@ -17,7 +17,8 @@ end
 
 helpers do
   def all_todos_done?(list)
-    count_todos(list) >= 1 && count_todos_remaining(list).zero?
+    # count_todos(list) >= 1 && count_todos_remaining(list).zero?
+    list[:todos_count] >= 1 && list[:todos_remaining_count].zero?
   end
 
   def list_class(list)
