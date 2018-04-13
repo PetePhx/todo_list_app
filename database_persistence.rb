@@ -21,16 +21,22 @@ class DatabasePersistence
   end
 
   def find_list(list_id)
-    todos = find_todos_for_list(list_id)
-
-    sql = "SELECT * FROM lists WHERE id = $1;"
+    # todos = find_todos_for_list(list_id)
+    sql = <<~SQL
+          SELECT lists.id, lists.name,
+            COUNT(todos.id) AS todos_count,
+            COUNT(NULLIF(completed, TRUE)) AS todos_remaining_count
+            FROM lists LEFT JOIN todos
+            ON lists.id = list_id
+            WHERE lists.id = $1
+            GROUP BY lists.id
+            ORDER BY lists.id;
+    SQL
     result = query(sql, list_id)
-    tuple = result.first
-    { id: tuple["id"].to_i, name: tuple["name"], todos: todos }
+    tuple_to_list_hash(result.first)
   end
 
   def all_lists
-    # sql = "SELECT * FROM lists;"
     sql = <<~SQL
           SELECT lists.id, lists.name,
             COUNT(todos.id) AS todos_count,
@@ -41,13 +47,8 @@ class DatabasePersistence
             ORDER BY lists.id;
     SQL
     result = query(sql)
-    # todos = find_all_todos
     result.map do |tuple|
-      { id: tuple["id"].to_i,
-        name: tuple["name"],
-        todos_count: tuple["todos_count"].to_i,
-        todos_remaining_count: tuple["todos_remaining_count"].to_i }
-        # todos: todos.select { |t| t[:list_id] == tuple["id"].to_i } }
+      tuple_to_list_hash(tuple)
     end
   end
 
@@ -88,27 +89,23 @@ class DatabasePersistence
           list_id)
   end
 
+  def find_todos_for_list(list_id)
+    sql_todos = "SELECT * FROM todos WHERE list_id = $1;"
+    result_todos = query(sql_todos, list_id)
+    result_todos.map do |tuple|
+      { id: tuple["id"].to_i,
+        list_id: tuple["list_id"].to_i,
+        name: tuple["name"],
+        completed: tuple["completed"] == "t" }
+    end
+  end
+
   private
 
-    def find_todos_for_list(list_id)
-      sql_todos = "SELECT * FROM todos WHERE list_id = $1;"
-      result_todos = query(sql_todos, list_id)
-      result_todos.map do |tuple|
-        { id: tuple["id"].to_i,
-          list_id: tuple["list_id"].to_i,
-          name: tuple["name"],
-          completed: tuple["completed"] == "t" }
-      end
-    end
-
-    def find_all_todos
-      sql_todos = "SELECT * FROM todos;"
-      result_todos = query(sql_todos)
-      result_todos.map do |tuple|
-        { id: tuple["id"].to_i,
-          list_id: tuple["list_id"].to_i,
-          name: tuple["name"],
-          completed: tuple["completed"] == "t" }
-      end
+    def tuple_to_list_hash(tuple)
+      { id: tuple["id"].to_i,
+        name: tuple["name"],
+        todos_count: tuple["todos_count"].to_i,
+        todos_remaining_count: tuple["todos_remaining_count"].to_i }
     end
 end

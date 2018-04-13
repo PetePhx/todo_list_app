@@ -17,7 +17,6 @@ end
 
 helpers do
   def all_todos_done?(list)
-    # count_todos(list) >= 1 && count_todos_remaining(list).zero?
     list[:todos_count] >= 1 && list[:todos_remaining_count].zero?
   end
 
@@ -29,22 +28,14 @@ helpers do
     todo[:completed] ? "complete" : ""
   end
 
-  def count_todos_remaining(list)
-    list[:todos].reject { |todo| todo[:completed] }.size
-  end
-
-  def count_todos(list)
-    list[:todos].size
-  end
-
   def sort_lists(list_arr, &block)
     list_arr.each_with_index.sort_by do |list, _|
       all_todos_done?(list) ? 1 : 0
     end.each(&block)
   end
 
-  def sort_todos(list, &block)
-    list[:todos].each_with_index.sort_by do |todo, _|
+  def sort_todos(todos, &block)
+    todos.each_with_index.sort_by do |todo, _|
       todo[:completed] ? 1 : 0
     end.each(&block)
   end
@@ -118,6 +109,7 @@ end
 get "/lists/:id" do
   @list_id = params[:id].to_i
   @list = load_list(@list_id)
+  @todos = @storage.find_todos_for_list(@list_id)
   erb :list, layout: :layout
 end
 
